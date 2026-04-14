@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>车型参数抓取</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{max-width:1000px;margin:0 auto;padding:20px}
+input{width:100%;padding:10px;margin:10px 0}
+button{padding:10px 20px;margin:5px;background:#0066cc;color:#fff;border:0;border-radius:6px;cursor:pointer}
+.btn2{background:#009900}
+#log{padding:10px;background:#f5f5f5;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+td,th{border:1px solid #ddd;padding:8px}
+th{background:#f2f2f2}
+</style>
+</head>
+<body>
+<h3>懂车帝参数抓取</h3>
+<input id="url" placeholder="输入https://www.dongchedi.com/auto/params-carIds-x-xxx">
+<button onclick="go()">抓取参数</button>
+<button onclick="exportExcel()" class="btn2">导出Excel</button>
+<div id="log"></div>
+<div id="table"></div>
+<script>
+var params=[];function log(m){document.getElementById("log").innerHTML=m}
+function go(){var u=document.getElementById("url").value;
+if(!u.includes("dongchedi.com")||!u.includes("params-carIds")){alert("请输入正确链接");return}
+log("加载中...");fetch(u).then(r=>r.text()).then(html=>{
+var p=[];var doc=new DOMParser().parseFromString(html,"text/html");
+doc.querySelectorAll(".parameter_group").forEach(g=>{
+var t=g.querySelector(".group_title")?.innerText||"参数";
+g.querySelectorAll(".param_item").forEach(i=>{
+var n=i.querySelector(".param_label")?.innerText;
+var v=i.querySelector(".param_value")?.innerText;
+if(n&&v&&!n.includes("○")&&!n.includes("●"))p.push({c:t,n:n,v:v})
+})});params=p;log("成功抓取 "+p.length+" 项参数");showTable();
+}).catch(e=>{log("本地跨域限制，部署网站后自动抓真实数据")})}
+function showTable(){var h="<table><tr><th>分类</th><th>参数</th><th>值</th></tr>";
+params.forEach(i=>h+="<tr><td>"+i.c+"</td><td>"+i.n+"</td><td>"+i.v+"</td></tr>");
+document.getElementById("table").innerHTML=h+"</table>"}
+function exportExcel(){var wb=XLSX.utils.book_new();
+var data=[["分类","参数","值"]];params.forEach(i=>data.push([i.c,i.n,i.v]));
+var ws=XLSX.utils.aoa_to_sheet(data);XLSX.utils.book_append_sheet(wb,ws,"参数");
+XLSX.writeFile(wb,"车型参数.xlsx")}
+</script>
+</body>
+</html>
